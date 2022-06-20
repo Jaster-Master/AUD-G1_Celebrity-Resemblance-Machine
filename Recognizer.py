@@ -9,6 +9,7 @@ from keras_vggface.vggface import VGGFace
 from keras_vggface.utils import preprocess_input
 from keras_vggface.utils import decode_predictions
 from icrawler.builtin import GoogleImageCrawler
+from os.path import exists
 import PIL
 
 # https://machinelearningmastery.com/how-to-perform-face-recognition-with-vggface2-convolutional-neural-network-in-keras/
@@ -16,6 +17,8 @@ import PIL
 # 0 is default webcam. Change to switch between multiple cameras or IP address.
 
 projectDir = os.path.abspath(os.curdir)
+
+imgDir = projectDir + '\\img'
 
 vc = cv2.VideoCapture(0)
 
@@ -35,10 +38,6 @@ while True:
 
     # press space to start -> 32 = Space
     if key == ord(chr(32)):
-        try:
-            os.remove(projectDir + '\\000001.jpg')
-        except Exception:
-            print("file not found")
 
         detector = MTCNN()
         target_size = (224, 224)
@@ -77,25 +76,32 @@ while True:
 
         print(promi_name)
 
-        google_Crawler = GoogleImageCrawler(storage={'root_dir': projectDir})
+        promi_file_name = imgDir + '\\' + promi_name + '.jpg'
 
-        google_Crawler.crawl(keyword=promi_name, max_num=1)
+        promi_file_exists = exists(promi_file_name)
 
-        celebrityImage = cv2.imread(projectDir + '\\000001.jpg')
+        if promi_file_exists:
+            celebrityImage = cv2.imread(promi_file_name)
 
-        celebrityImage = cv2.resize(celebrityImage, (224, 224), celebrityImage)
+            cv2.imshow('Celebrity', celebrityImage)
+        else:
 
-        cv2.imshow('Celebrity', celebrityImage)
+            google_Crawler = GoogleImageCrawler(storage={'root_dir': imgDir})
 
-        key = cv2.waitKey(1) & 0xFF
+            google_Crawler.crawl(keyword=promi_name, max_num=1)
+
+            os.rename(imgDir + '\\000001.jpg', promi_file_name)
+
+            celebrityImage = cv2.imread(promi_file_name)
+
+            celebrityImage = cv2.resize(celebrityImage, (224, 224), celebrityImage)
+
+            cv2.imshow('Celebrity', celebrityImage)
+
+            key = cv2.waitKey(1) & 0xFF
     else:
         # 27 = Escape
         if key == ord(chr(27)):
-            try:
-                os.remove(projectDir + '\\000001.jpg')
-            except Exception:
-                print("file not found")
-
             break
 
 cv2.destroyAllWindows()
